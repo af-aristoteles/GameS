@@ -412,6 +412,31 @@
     color: #aaa;
   }
 
+  /* Footer credit styling */
+  footer#credit {
+    text-align: center;
+    padding: 12px 0;
+    font-weight: 700;
+    font-size: 1.2rem;
+    font-family: 'Inter', sans-serif;
+    user-select: none;
+    background: linear-gradient(135deg, #0078d4, #4bb8ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    text-shadow: 0 0 6px rgba(75,184,255,0.75);
+    margin-top: 32px;
+    animation: glow 3s ease-in-out infinite alternate;
+  }
+  @keyframes glow {
+    from {
+      text-shadow: 0 0 8px rgba(75,184,255,0.5), 0 0 12px rgba(75,184,255,0.7);
+    }
+    to {
+      text-shadow: 0 0 16px rgba(75,184,255,1), 0 0 30px rgba(75,184,255,1);
+    }
+  }
+
   /* Responsive adjustments */
   @media (max-width: 480px) {
     #game-menu {
@@ -466,6 +491,8 @@
     </main>
   </div>
 
+  <footer id="credit" aria-label="Kredit aplikasi">By AlFa</footer>
+
   <script>
     (() => {
       // Utils
@@ -489,8 +516,7 @@
 
       // Question bank lokal kuis (level 1 sampai 50, contoh 5 pertanyaan per level)
       const localQuizDB = (() => {
-        // Dibuat array di mana index level (1-based) berisi array 5 pertanyaan tiap level
-        // Contoh sederhana tiap level sama dlm demo, tapi bisa dikembangkan agar unik tiap level
+        // Pertanyaan contoh per level (bisa diubah/diperbanyak nantinya)
         const baseQuestions = [
           {
             question: "Berapa hasil dari 2 + 2?",
@@ -519,10 +545,9 @@
           }
         ];
         // Buat DB level 1 sampai 50 dengan pertanyaan yg sama utk demo.
-        // Ini bisa dikembangkan dengan pertanyaan berbeda tiap level sebenarnya.
         let levels = [];
         for(let i=1; i<=50; i++){
-          levels.push(baseQuestions); // Bisa expand dg data riil unik tiap level nanti
+          levels.push(baseQuestions); 
         }
         return levels;
       })();
@@ -951,7 +976,7 @@
       }
 
       // ---------------------
-      // Memory Memory Game with Level & Score
+      // Memory Memory Game dengan Level & Skor
       // ---------------------
       const memoryIcons = [
         "sports_esports", "emoji_objects", "videogame_asset", "gamepad",
@@ -989,7 +1014,7 @@
         let lockBoard = false;
         let matches = 0;
 
-        // Scale number of pairs from 4 pairs on level 1 to max 17 pairs on level 50
+        // Skala jumlah pasang kartu dari 4 pasang level 1 sampai maksimal 17 pasang level 50
         const maxPairs = Math.min(17, 4 + Math.floor((level-1)*13/49));
 
         function updateInfo() {
@@ -1115,3 +1140,4 @@
   </style>
 </body>
 </html>
+
