@@ -410,16 +410,71 @@
     color: #4bb8ff;
   }
 
-  /* Loading spinner */
-  #loading {
+  /* Cari Kata (Word Search) Styles */
+  #wordsearch-game {
+    max-width: 600px;
+    margin: 0 auto;
+    user-select: none;
     text-align: center;
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-top: 40px;
-    color: #555;
   }
-  [data-theme="dark"] #loading {
-    color: #aaa;
+  #wordsearch-info {
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+  }
+  #wordsearch-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 30px);
+    grid-template-rows: repeat(10, 30px);
+    gap: 2px;
+    justify-content: center;
+    margin-bottom: 12px;
+  }
+  .word-cell {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #999;
+    background-color: #ddd;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #333;
+    cursor: pointer;
+    user-select: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .word-cell.selected {
+    background-color: #4bb8ff;
+    color: white;
+  }
+  .word-cell.found {
+    background-color: #1976d2;
+    color: white;
+    cursor: default;
+  }
+  [data-theme="dark"] .word-cell {
+    background-color: #333;
+    border-color: #555;
+    color: #eee;
+  }
+  [data-theme="dark"] .word-cell.selected {
+    background-color: #91ccff;
+    color: #222;
+  }
+  [data-theme="dark"] .word-cell.found {
+    background-color: #4bb8ff;
+    color: #222;
+  }
+  #wordsearch-words {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  #wordsearch-progress {
+    margin-top: 12px;
+    font-weight: 600;
+    font-size: 1rem;
   }
 
   /* Footer credit styling */
@@ -459,6 +514,10 @@
     #memory-board {
       max-width: 320px;
       gap: 6px;
+    }
+    #wordsearch-grid {
+      grid-template-columns: repeat(8, 30px);
+      grid-template-rows: repeat(8, 30px);
     }
   }
 </style>
@@ -511,287 +570,124 @@
   <script>
     (() => {
       // Utils
-      function htmlToText(html) {
-        const div = document.createElement("div");
-        div.innerHTML = html;
-        return div.textContent || div.innerText || "";
-      }
-      // Penyimpanan lokal
-      const STORAGE_KEY = "multiGameAppStateV2";
       function saveState(state) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        localStorage.setItem('multiGameAppStateV2', JSON.stringify(state));
       }
       function loadState() {
         try {
-          const raw = localStorage.getItem(STORAGE_KEY);
+          let raw = localStorage.getItem('multiGameAppStateV2');
           if(raw) return JSON.parse(raw);
-        } catch(e) { }
+        } catch (e) {}
         return null;
       }
-
-      // Question bank lokal kuis (level 1 sampai 50, contoh 5 pertanyaan per level)
-      const localQuizDB = (() => {
-        const baseQuestions = [
-          {
-            question: "Berapa hasil dari 2 + 2?",
-            correct_answer: "4",
-            options: ["1", "4", "3", "2"]
-          },
-          {
-            question: "Siapa penulis novel 'Laskar Pelangi'?",
-            correct_answer: "Andrea Hirata",
-            options: ["Andrea Hirata", "Dewi Lestari", "Pramoedya Ananta Toer", "Tere Liye"]
-          },
-          {
-            question: "Ibukota Indonesia adalah?",
-            correct_answer: "Jakarta",
-            options: ["Jakarta", "Bandung", "Surabaya", "Medan"]
-          },
-          {
-            question: "Bendera Indonesia berwarna?",
-            correct_answer: "Merah dan Putih",
-            options: ["Merah dan Putih", "Biru dan Putih", "Merah dan Biru", "Hijau dan Kuning"]
-          },
-          {
-            question: "Gunung tertinggi di Indonesia adalah?",
-            correct_answer: "Puncak Jaya",
-            options: ["Puncak Jaya", "Kerinci", "Semeru", "Rinjani"]
-          }
-        ];
-        let levels = [];
-        for(let i=1; i<=50; i++){
-          levels.push(baseQuestions);
-        }
-        return levels;
-      })();
-
-      // App State
+      // Current app state
       let appState = {
         theme: "light",
-        puzzle: { level: 1, score: 0 },
-        quiz: { level: 1, score: 0 },
-        riddle: { index: 0, correctCount: 0, level: 1 },
-        memory: { bestScore: 0, level: 1, score: 0 },
-        wordsearch: { level: 1, score: 0 },
+        puzzle: {level: 1, score: 0},
+        quiz: {level: 1, score: 0},
+        riddle: {index: 0, correctCount: 0, level: 1},
+        memory: {bestScore: 0, level: 1, score: 0},
+        wordsearch: {foundWords: [], level: 1, score: 0}
       };
       const storedState = loadState();
       if(storedState) appState = Object.assign(appState, storedState);
 
-      const app = document.getElementById("app");
-      const themeToggle = document.getElementById("theme-toggle");
-      const gameMenu = document.getElementById("game-menu");
-      const gameContainer = document.getElementById("game-container");
+      const gameContainer = document.getElementById('game-container');
+      const themeToggle = document.getElementById('theme-toggle');
+      const gameMenu = document.getElementById('game-menu');
       const body = document.body;
 
+      themeToggle.addEventListener('click', () => {
+        const newTheme = body.dataset.theme=='light'?'dark':'light';
+        setTheme(newTheme);
+      });
       function setTheme(theme) {
-        body.setAttribute("data-theme", theme);
-        themeToggle.textContent = theme === "light" ? "Mode Gelap" : "Mode Terang";
-        themeToggle.setAttribute("aria-pressed", theme !== "light");
+        body.dataset.theme = theme;
+        themeToggle.textContent = theme=='light'?'Mode Gelap':'Mode Terang';
+        themeToggle.setAttribute('aria-pressed', theme!='light');
         appState.theme = theme;
         saveState(appState);
       }
       setTheme(appState.theme);
 
-      themeToggle.addEventListener("click", () => {
-        const newTheme = body.getAttribute("data-theme") === "light"? "dark": "light";
-        setTheme(newTheme);
-      });
-
       function showGameMenu() {
-        gameContainer.innerHTML = "";
-        gameMenu.style.display = "grid";
-        document.getElementById("back-btn")?.remove();
-        gameContainer.setAttribute("aria-live","polite");
+        gameContainer.innerHTML = '';
+        gameMenu.style.display = 'grid';
+        document.getElementById('back-btn')?.remove();
+        gameContainer.setAttribute('aria-live','polite');
         setTimeout(() => {
-          const firstCard = gameMenu.querySelector(".game-card");
+          const firstCard = gameMenu.querySelector('.game-card');
           if(firstCard) firstCard.focus();
         }, 100);
       }
-      function createBackButton() {
-        const btn = document.createElement("button");
-        btn.id = "back-btn";
-        btn.textContent = "← Kembali ke Menu";
-        btn.addEventListener("click", () => {
-          showGameMenu();
-        });
-        app.querySelector("main").insertBefore(btn, gameContainer);
+      function createBackButton(){
+        const btn = document.createElement('button');
+        btn.textContent='← Kembali ke Menu';
+        btn.id='back-btn';
+        btn.style.marginBottom='20px';
+        btn.style.backgroundColor='#0078d4';
+        btn.style.border='none';
+        btn.style.color='white';
+        btn.style.fontWeight='600';
+        btn.style.padding='8px 16px';
+        btn.style.borderRadius='12px';
+        btn.style.cursor='pointer';
+        btn.style.transition='background-color 0.3s ease';
+        btn.addEventListener('mouseenter',()=> btn.style.backgroundColor='#005ea3');
+        btn.addEventListener('mouseleave',()=> btn.style.backgroundColor='#0078d4');
+        btn.addEventListener('focus',()=> btn.style.backgroundColor='#005ea3');
+        btn.addEventListener('blur',()=> btn.style.backgroundColor='#0078d4');
+        btn.addEventListener('click',()=>showGameMenu());
+        const mainEl = document.querySelector('main');
+        mainEl.insertBefore(btn, gameContainer);
       }
 
-      /*... puzzle, quiz, riddle, memory implementations unchanged except riddle modified for clue display ...*/
-
-      // --- Updated Teka Teki (riddle) game section with clue display ---
-
-      const riddlesDemo = [
-        {
-          question: "Aku berbicara tanpa mulut dan mendengar tanpa telinga. Aku tidak mempunyai tubuh, tapi aku hidup dengan angin. Siapakah aku?",
-          answer: /gaung|gema|echo/i,
-          hint: "Ini adalah pengulangan suara."
-        },
-        {
-          question: "Apa yang punya kunci tapi tidak bisa membuka pintu?",
-          answer: /piano|keyboard|papan ketik/i,
-          hint: "Biasanya digunakan untuk bermain musik atau mengetik."
-        },
-        {
-          question: "Apa yang muncul sekali dalam semenit, dua kali dalam sesaat, tapi tidak pernah dalam seribu tahun?",
-          answer: /m/i,
-          hint: "Perhatikan huruf dalam kata-kata tersebut."
-        },
-        {
-          question: "Apa yang punya tangan tapi tidak bisa bertepuk tangan?",
-          answer: /jam/i,
-          hint: "Memberitahu waktu."
-        },
-        {
-          question: "Apa yang bisa berkeliling dunia sambil tetap di tempat yang sama?",
-          answer: /perangko|prangko/i,
-          hint: "Digunakan pada amplop surat."
-        }
-      ];
-
-      function loadRiddleGame() {
-        gameMenu.style.display = "none";
-        gameContainer.innerHTML = "";
+      // Wordsearch Game
+      function loadWordSearchGame(){
+        gameMenu.style.display='none';
+        gameContainer.innerHTML='';
         createBackButton();
 
-        const riddleEl = document.createElement("section");
-        riddleEl.id = "riddle-game";
+        const wordsearchEl = document.createElement('section');
+        wordsearchEl.id='wordsearch-game';
+        wordsearchEl.style.maxWidth='600px';
+        wordsearchEl.style.margin='0 auto';
+        wordsearchEl.style.userSelect='none';
+        wordsearchEl.style.textAlign='center';
 
-        const questionEl = document.createElement("div");
-        questionEl.id = "riddle-question";
-        riddleEl.appendChild(questionEl);
-
-        const clueEl = document.createElement("div");
-        clueEl.id = "riddle-clue";
-        riddleEl.appendChild(clueEl);
-
-        const formEl = document.createElement("form");
-        formEl.id = "riddle-answer-form";
-
-        const inputEl = document.createElement("input");
-        inputEl.type = "text";
-        inputEl.id = "riddle-answer";
-        inputEl.setAttribute("aria-label", "Ketik jawaban Anda di sini");
-        inputEl.autocomplete = "off";
-        inputEl.required = true;
-        formEl.appendChild(inputEl);
-
-        const submitBtn = document.createElement("button");
-        submitBtn.type = "submit";
-        submitBtn.id = "riddle-submit";
-        submitBtn.textContent = "Kirim Jawaban";
-        formEl.appendChild(submitBtn);
-
-        riddleEl.appendChild(formEl);
-
-        const feedbackEl = document.createElement("div");
-        feedbackEl.id = "riddle-feedback";
-        riddleEl.appendChild(feedbackEl);
-
-        const scoreEl = document.createElement("div");
-        scoreEl.id = "riddle-score";
-        riddleEl.appendChild(scoreEl);
-
-        const levelEl = document.createElement("div");
-        levelEl.id = "riddle-level";
-        riddleEl.appendChild(levelEl);
-
-        gameContainer.appendChild(riddleEl);
-
-        let level = appState.riddle.level || 1;
-        let currentIndex = appState.riddle.index || 0;
-        let correctCount = appState.riddle.correctCount || 0;
-
-        function showRiddle() {
-          feedbackEl.textContent = "";
-          inputEl.value = "";
-          inputEl.focus();
-
-          // Select riddles based on level (cycle through with shift so >50 levels possible)
-          const shiftedIndex = (currentIndex + (level - 1)) % riddlesDemo.length;
-          const riddle = riddlesDemo[shiftedIndex];
-          questionEl.textContent = `Teka Teki ${currentIndex + 1} (Level ${level}): ${riddle.question}`;
-          clueEl.textContent = `Petunjuk: ${riddle.hint}`;
-          scoreEl.textContent = `Jawaban benar: ${correctCount} dari ${riddlesDemo.length}`;
-          levelEl.textContent = `Level saat ini: ${level}`;
-        }
-
-        formEl.addEventListener("submit", e => {
-          e.preventDefault();
-          const userAnswer = inputEl.value.trim();
-          if(userAnswer === "") return;
-          const shiftedIndex = (currentIndex + (level -1)) % riddlesDemo.length;
-          const riddle = riddlesDemo[shiftedIndex];
-
-          if(riddle.answer.test(userAnswer)) {
-            feedbackEl.textContent = "Jawaban benar! Bagus sekali.";
-            correctCount++;
-            appState.riddle.correctCount = correctCount;
-          } else {
-            feedbackEl.textContent = `Salah. Coba lagi atau gunakan petunjuk di atas.`;
-          }
-
-          currentIndex++;
-          appState.riddle.index = currentIndex;
-
-          if(currentIndex >= riddlesDemo.length){
-            alert(`Level ${level} selesai! Anda menjawab benar ${correctCount} dari ${riddlesDemo.length}.`);
-            level = Math.min(level + 1, 50);
-            appState.riddle.level = level;
-            appState.riddle.index = 0;
-            currentIndex = 0;
-            correctCount = 0;
-            appState.riddle.correctCount = 0;
-          }
-          saveState(appState);
-          setTimeout(showRiddle, 1200);
-        });
-
-        showRiddle();
-      }
-
-      // -------------------------
-      // Game Seru Tambahan: Cari Kata (Word Search)
-      // -------------------------
-      // Simple word search game with fixed word list and grid
-      function loadWordSearchGame() {
-        gameMenu.style.display = "none";
-        gameContainer.innerHTML = "";
-        createBackButton();
-
-        const wordsearchEl = document.createElement("section");
-        wordsearchEl.id = "wordsearch-game";
-        wordsearchEl.style.maxWidth = "600px";
-        wordsearchEl.style.margin = "0 auto";
-        wordsearchEl.style.userSelect = "none";
-
-        const infoEl = document.createElement("div");
-        infoEl.id = "wordsearch-info";
-        infoEl.style.fontWeight = "600";
-        infoEl.style.fontSize = "1.1rem";
-        infoEl.style.marginBottom = "12px";
-        infoEl.style.textAlign = "center";
+        const infoEl = document.createElement('div');
+        infoEl.id='wordsearch-info';
+        infoEl.style.fontWeight='600';
+        infoEl.style.fontSize='1.2rem';
+        infoEl.style.marginBottom='12px';
         wordsearchEl.appendChild(infoEl);
 
-        const gridEl = document.createElement("div");
-        gridEl.id = "wordsearch-grid";
-        gridEl.style.display = "grid";
-        gridEl.style.gridTemplateColumns = "repeat(10, 30px)";
-        gridEl.style.gridTemplateRows = "repeat(10, 30px)";
-        gridEl.style.gap = "2px";
-        gridEl.style.justifyContent = "center";
-        gridEl.style.marginBottom = "12px";
+        const progressEl = document.createElement('div');
+        progressEl.id = 'wordsearch-progress';
+        progressEl.style.marginTop = '12px';
+        progressEl.style.fontWeight = '600';
+        progressEl.style.fontSize = '1rem';
+        wordsearchEl.appendChild(progressEl);
+
+        const gridEl = document.createElement('div');
+        gridEl.id='wordsearch-grid';
+        gridEl.style.display='grid';
+        gridEl.style.gridTemplateColumns='repeat(10, 30px)';
+        gridEl.style.gridTemplateRows='repeat(10, 30px)';
+        gridEl.style.gap='2px';
+        gridEl.style.justifyContent='center';
+        gridEl.style.marginBottom='12px';
         wordsearchEl.appendChild(gridEl);
 
-        const wordsEl = document.createElement("div");
-        wordsEl.id = "wordsearch-words";
-        wordsEl.style.textAlign = "center";
-        wordsEl.style.fontWeight = "600";
+        const wordsEl = document.createElement('div');
+        wordsEl.id='wordsearch-words';
+        wordsEl.style.textAlign='center';
+        wordsEl.style.fontWeight='600';
+        wordsEl.style.fontSize = '1rem';
         wordsearchEl.appendChild(wordsEl);
 
         gameContainer.appendChild(wordsearchEl);
 
-        // Word list and grid setup
         const words = [
           "INDONESIA",
           "COMPUTER",
@@ -805,57 +701,162 @@
           "TANTANGAN"
         ];
 
-        // 10x10 grid filled with random letters initially
         const gridSize = 10;
         const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
         let grid = [];
 
-        // Initialize grid with random letters
-        for(let i=0; i<gridSize*gridSize; i++) {
+        for(let i=0;i<gridSize*gridSize;i++){
           grid[i] = letters.charAt(Math.floor(Math.random()*letters.length));
         }
 
-        // Function to put words in grid horizontally for simplicity
-        function placeWords() {
-          words.forEach((word, idx) => {
-            let startRow = idx % (gridSize);
-            let startCol = Math.floor((idx*2) % (gridSize - word.length));
-            for(let i=0; i<word.length; i++){
-              let idxGrid = startRow*gridSize + startCol + i;
-              grid[idxGrid] = word.charAt(i);
-            }
-          });
-        }
-        placeWords();
-
-        // Render grid
-        gridEl.innerHTML = "";
-        grid.forEach((letter, i) => {
-          const cell = document.createElement("button");
-          cell.className = "word-cell";
-          cell.style.width = "30px";
-          cell.style.height = "30px";
-          cell.style.lineHeight = "30px";
-          cell.style.fontWeight = "700";
-          cell.style.fontSize = "1rem";
-          cell.style.color = "#333";
-          cell.style.backgroundColor = "#ddd";
-          cell.style.border = "1px solid #999";
-          cell.style.userSelect = "none";
-
-          cell.textContent = letter;
-          cell.setAttribute("data-index", i);
-          cell.setAttribute("aria-label", `Huruf ${letter}`);
-
-          gridEl.appendChild(cell);
+        // Letakkan kata secara horizontal sederhana mulai di tiap baris ke-i
+        words.forEach((word,i)=>{
+          let startRow = i;
+          let startCol = 0;
+          for(let j=0;j<word.length;j++){
+            grid[startRow*gridSize + startCol + j] = word.charAt(j);
+          }
         });
 
-        wordsEl.textContent = "Temukan kata-kata berikut: " + words.join(", ");
+        gridEl.innerHTML = '';
+        wordsEl.textContent='Temukan kata-kata: '+words.join(', ');
 
-        // Game logic: select words is out of scope here but simple touch click to highlight cells while matching words can be implemented
-        // For demo, just static board and word list
-        infoEl.textContent = "Game Cari Kata: Temukan semua kata dengan mencari hurufnya di grid.";
+        // Selection state
+        let selecting = false;
+        let firstCell = null;
+        let selectedCells = [];
+        let foundWords = new Set(appState.wordsearch.foundWords || []);
 
+        function renderGrid(){
+          gridEl.innerHTML='';
+          for(let i=0;i<grid.length;i++){
+            const cell = document.createElement('button');
+            cell.className='word-cell';
+            cell.textContent=grid[i];
+            cell.dataset.index=i;
+            cell.setAttribute('aria-label',`Huruf ${grid[i]}`);
+            if(foundWords.size && wordHasCell(i)) cell.classList.add('found');
+            if(selectedCells.includes(i)) cell.classList.add('selected');
+
+            if(foundWords.size && wordHasCell(i)){
+              cell.disabled=true;
+              cell.style.cursor='default';
+            }
+            cell.addEventListener('click',()=>handleCellClick(i));
+            cell.addEventListener('keydown', e=>{
+              if(e.key==='Enter' || e.key===' '){
+                e.preventDefault();
+                handleCellClick(i);
+              }
+            });
+            gridEl.appendChild(cell);
+          }
+          updateProgress();
+        }
+
+        // Helper: cek huruf index apakan bagian kata yg sudah ditemukan
+        function wordHasCell(index){
+          for(const w of foundWords){
+            let wIdxs = wordIndexes(w);
+            if(wIdxs.includes(index)) return true;
+          }
+          return false;
+        }
+
+        // Cari index sel grid kata secara horizontal mulai baris ke-i
+        function wordIndexes(word){
+          for(let row=0;row<gridSize;row++){
+            for(let col=0;col<=gridSize-word.length;col++){
+              let match=true;
+              for(let k=0;k<word.length;k++){
+                if(grid[row*gridSize + col + k]!==word.charAt(k)) match=false;
+              }
+              if(match){
+                return Array.from({length:word.length},(_,m)=> row*gridSize + col + m);
+              }
+            }
+          }
+          return [];
+        }
+
+        function handleCellClick(idx){
+          if(foundWords.size && wordHasCell(idx)) return;
+          if(!selecting){
+            // mulai memilih
+            selecting=true;
+            firstCell=idx;
+            selectedCells=[idx];
+            renderGrid();
+          } else {
+            // selesai memilih, cek apakah garis lurus horizontal atau vertikal & kata valid
+            const secondCell=idx;
+            selectedCells = getLineIndexes(firstCell, secondCell);
+            if(selectedCells.length>1){ // bentuk garis
+              let selectedWord="";
+              selectedCells.forEach(i=>{
+                selectedWord+=grid[i];
+              });
+              const foundWord = words.find(w=> w===selectedWord || w===reverseString(selectedWord));
+              if(foundWord && !foundWords.has(foundWord)){
+                foundWords.add(foundWord);
+                appState.wordsearch.foundWords = Array.from(foundWords);
+                appState.wordsearch.score = (appState.wordsearch.score||0) + foundWord.length * 10;
+                saveState(appState);
+                alert(`Kamu menemukan kata: ${foundWord}!`);
+                selectedCells=[];
+                selecting=false;
+                firstCell=null;
+                renderGrid();
+                if(foundWords.size === words.length){
+                  alert('Selamat! Kamu menemukan semua kata.');
+                }
+                return;
+              }
+            }
+            // tidak valid, batalkan dan ulangi
+            alert('Kata tidak sesuai atau sudah ditemukan, coba lagi.');
+            selectedCells=[];
+            selecting=false;
+            firstCell=null;
+            renderGrid();
+          }
+        }
+
+        // Dapatkan garis index antara 2 posisi sel (hanya horizontal atau vertikal dikenali)
+        function getLineIndexes(i1,i2){
+          // jika i1 dan i2 di baris sama
+          if(Math.floor(i1/gridSize) === Math.floor(i2/gridSize)){
+            const row = Math.floor(i1/gridSize);
+            const start = Math.min(i1,i2);
+            const end = Math.max(i1,i2);
+            let arr=[];
+            for(let c=start;c<=end;c++) arr.push(c);
+            return arr;
+          }
+          // jika i1 dan i2 di kolom sama
+          if(i1%gridSize === i2%gridSize){
+            const col = i1%gridSize;
+            const startRow = Math.min(Math.floor(i1/gridSize), Math.floor(i2/gridSize));
+            const endRow = Math.max(Math.floor(i1/gridSize), Math.floor(i2/gridSize));
+            let arr = [];
+            for(let r=startRow;r<=endRow;r++){
+              arr.push(r*gridSize + col);
+            }
+            return arr;
+          }
+          return []; // bukan garis lurus valid
+        }
+
+        function reverseString(str){
+          return str.split('').reverse().join('');
+        }
+
+        function updateProgress(){
+          progressEl.textContent = `Kata ditemukan: ${foundWords.size} / ${words.length} | Skor: ${appState.wordsearch.score || 0}`;
+        }
+
+        renderGrid();
+        updateProgress();
       }
 
       // Setup event listeners untuk pilihan game
