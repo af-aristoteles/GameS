@@ -1,878 +1,1078 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Multi-Game Seru - Puzzle & Kuis</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Material+Icons&display=swap" rel="stylesheet" />
-<style>
-  /* Reset and base */
-  *, *::before, *::after {
-    box-sizing: border-box;
-  }
-  body {
-    margin: 0; padding: 0;
-    font-family: 'Inter', sans-serif;
-    background: #f5f7fa;
-    color: #222;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-  [data-theme="dark"] {
-    background: #121212;
-    color: #ddd;
-  }
-  a, button {
-    font-family: inherit;
-  }
-
-  /* Layout */
-  #app {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-    max-width: 1024px;
-    margin: 0 auto;
-    padding: 16px 24px;
-  }
-  header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #ccc;
-  }
-  [data-theme="dark"] header {
-    border-color: #444;
-  }
-  h1 {
-    font-weight: 700;
-    font-size: 1.8rem;
-  }
-  #theme-toggle {
-    cursor: pointer;
-    background: none;
-    border: none;
-    color: #0078d4;
-    font-weight: 600;
-    font-size: 1rem;
-    padding: 6px 12px;
-    border-radius: 6px;
-    transition: background-color 0.3s ease;
-  }
-  #theme-toggle:hover, #theme-toggle:focus {
-    background-color: #0078d444;
-    outline:none;
-  }
-  [data-theme="dark"] #theme-toggle {
-    color: #4bb8ff;
-  }
-
-  main {
-    flex-grow: 1;
-    margin-top: 24px;
-    min-height: 400px;
-  }
-
-  /* Navigation and Game Selection */
-  #game-menu {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
-    gap: 24px;
-  }
-  .game-card {
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 8px 20px rgb(0 0 0 / 0.1);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 24px 16px;
-    cursor: pointer;
-    user-select: none;
-    transition: box-shadow 0.3s ease;
-  }
-  .game-card:hover, .game-card:focus {
-    box-shadow: 0 12px 30px rgb(0 0 0 / 0.21);
-    outline:none;
-  }
-  .game-icon {
-    font-family: 'Material Icons';
-    font-size: 64px;
-    color: #0078d4;
-    margin-bottom: 12px;
-  }
-  [data-theme="dark"] .game-card {
-    background: #212121;
-    box-shadow: 0 6px 15px rgb(255 255 255 / 0.1);
-  }
-  [data-theme="dark"] .game-icon {
-    color: #4bb8ff;
-  }
-  .game-title {
-    font-weight: 600;
-    font-size: 1.2rem;
-    text-align: center;
-    color: inherit;
-  }
-
-  /* Game container */
-  #game-container {
-    margin-top: 16px;
-  }
-
-  /* Back button */
-  #back-btn {
-    margin-bottom: 20px;
-    background: #0078d4;
-    border: none;
-    color: white;
-    font-weight: 600;
-    padding: 8px 16px;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  #back-btn:hover, #back-btn:focus {
-    background-color: #005ea3;
-    outline:none;
-  }
-  [data-theme="dark"] #back-btn {
-    background-color: #4bb8ff;
-  }
-  [data-theme="dark"] #back-btn:hover {
-    background-color: #2a85d6;
-  }
-
-  /* Puzzle Game Styles */
-  #puzzle-game {
-    max-width: 360px;
-    margin: 0 auto;
-    user-select: none;
-  }
-  #puzzle-board {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    border-radius: 16px;
-    margin-bottom: 12px;
-    background: #ddd;
-  }
-  [data-theme="dark"] #puzzle-board {
-    background: #444;
-  }
-  .puzzle-tile {
-    background: #0078d4;
-    color: white;
-    font-weight: 700;
-    font-size: 1.5rem;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    aspect-ratio: 1/1;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    user-select:none;
-  }
-  .puzzle-tile.empty {
-    background: transparent;
-    cursor: default;
-  }
-  .puzzle-tile:hover:not(.empty), .puzzle-tile:focus:not(.empty) {
-    background-color: #005ea3;
-    outline:none;
-  }
-
-  /* Puzzle Score & Level */
-  #puzzle-info {
-    font-weight: 600;
-    font-size: 1.1rem;
-    margin-bottom: 16px;
-    text-align: center;
-  }
-
-  /* Quiz Game */
-  #quiz-game {
-    max-width: 660px;
-    margin: 0 auto;
-    user-select:none;
-  }
-  #quiz-info {
-    font-weight: 600;
-    font-size: 1.1rem;
-    margin-bottom: 8px;
-    text-align: center;
-  }
-  #quiz-question {
-    font-size: 1.2rem;
-    font-weight: 600;
-    margin-bottom: 20px;
-  }
-  #quiz-options {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .quiz-option {
-    background: #f8f9fa;
-    padding: 12px 16px;
-    font-size: 1rem;
-    border-radius: 12px;
-    cursor: pointer;
-    border: 2px solid transparent;
-    transition: border-color 0.3s ease, background-color 0.3s ease;
-  }
-  .quiz-option:hover, .quiz-option:focus {
-    border-color: #0078d4;
-    background: #e1f0fc;
-    outline:none;
-  }
-  [data-theme="dark"] .quiz-option {
-    background: #3a3a3a;
-    color: #ddd;
-  }
-  [data-theme="dark"] .quiz-option:hover, [data-theme="dark"] .quiz-option:focus {
-    background: #005ea3;
-    border-color: #4bb8ff;
-    color: white;
-  }
-  .quiz-option.correct {
-    background-color: #44a572 !important;
-    color: white !important;
-    border-color: #44a572 !important;
-  }
-  .quiz-option.incorrect {
-    background-color: #e04848 !important;
-    color: white !important;
-    border-color: #e04848 !important;
-  }
-  #quiz-progress {
-    margin-top: 20px;
-    font-weight: 600;
-    font-size: 1rem;
-    color: #555;
-    text-align: center;
-  }
-  [data-theme="dark"] #quiz-progress {
-    color: #bbb;
-  }
-
-  /* Riddles / Teka Teki */
-  #riddle-game {
-    max-width: 660px;
-    margin: 0 auto;
-    user-select:none;
-  }
-  #riddle-question {
-    font-size: 1.3rem;
-    font-weight: 600;
-    margin-bottom: 12px;
-  }
-  #riddle-clue {
-    font-size: 1rem;
-    font-weight: 400;
-    margin-bottom: 16px;
-    font-style: italic;
-    color: #555;
-  }
-  [data-theme="dark"] #riddle-clue {
-    color: #999;
-  }
-  #riddle-answer-form {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  #riddle-answer {
-    flex-grow: 1;
-    padding: 10px 14px;
-    font-size: 1rem;
-    border-radius: 12px;
-    border: 2px solid #ccc;
-    transition: border-color 0.3s ease;
-  }
-  #riddle-answer:focus {
-    outline:none;
-    border-color: #0078d4;
-  }
-  #riddle-submit {
-    background: #0078d4;
-    border: none;
-    color: white;
-    font-weight: 600;
-    font-size: 1rem;
-    border-radius: 12px;
-    padding: 10px 16px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-  #riddle-submit:hover, #riddle-submit:focus {
-    background: #005ea3;
-    outline:none;
-  }
-  [data-theme="dark"] #riddle-answer {
-    background: #222;
-    border-color: #555;
-    color: #eee;
-  }
-  [data-theme="dark"] #riddle-answer:focus {
-    border-color: #4bb8ff;
-  }
-  [data-theme="dark"] #riddle-submit {
-    background: #4bb8ff;
-  }
-  [data-theme="dark"] #riddle-submit:hover, [data-theme="dark"] #riddle-submit:focus {
-    background: #2a85d6;
-  }
-  #riddle-feedback {
-    font-weight: 600;
-    font-size: 1.1rem;
-    min-height: 24px;
-  }
-  #riddle-score, #riddle-level {
-    margin-top: 16px;
-    font-size: 1rem;
-    color: #555;
-    text-align:center;
-  }
-  [data-theme="dark"] #riddle-score,
-  [data-theme="dark"] #riddle-level {
-    color: #bbb;
-  }
-
-  /* Additional Game: Memory cards */
-  #memory-game {
-    max-width: 500px;
-    margin: 0 auto;
-    user-select:none;
-  }
-  #memory-info {
-    font-weight: 600;
-    font-size: 1.1rem;
-    margin-bottom: 12px;
-    text-align: center;
-  }
-  #memory-board {
-    display: grid;
-    grid-template-columns: repeat(auto-fill,minmax(80px,1fr));
-    gap: 12px;
-  }
-  .memory-card {
-    background: #0078d4;
-    border-radius: 14px;
-    aspect-ratio: 1/1;
-    position: relative;
-    cursor: pointer;
-    perspective: 600px;
-    user-select:none;
-  }
-  .memory-card.disabled {
-    cursor: default;
-    opacity: 0.7;
-  }
-  .memory-inner {
-    position: absolute;
-    width: 100%; height: 100%;
-    transition: transform 0.4s;
-    transform-style: preserve-3d;
-    border-radius: 14px;
-  }
-  .memory-card.flipped .memory-inner {
-    transform: rotateY(180deg);
-  }
-  .memory-front, .memory-back {
-    position: absolute;
-    width: 100%; height: 100%;
-    backface-visibility: hidden;
-    border-radius: 14px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 36px;
-    color: white;
-  }
-  .memory-front {
-    background: #1976d2;
-  }
-  .memory-back {
-    background: #eee;
-    color: #0078d4;
-    transform: rotateY(180deg);
-    font-family: 'Material Icons';
-  }
-  [data-theme="dark"] #memory-board .memory-front {
-    background: #4bb8ff;
-  }
-  [data-theme="dark"] #memory-board .memory-back {
-    background: #222;
-    color: #4bb8ff;
-  }
-
-  /* Cari Kata (Word Search) Styles */
-  #wordsearch-game {
-    max-width: 600px;
-    margin: 0 auto;
-    user-select: none;
-    text-align: center;
-  }
-  #wordsearch-info {
-    font-weight: 600;
-    font-size: 1.2rem;
-    margin-bottom: 12px;
-  }
-  #wordsearch-grid {
-    display: grid;
-    grid-template-columns: repeat(10, 30px);
-    grid-template-rows: repeat(10, 30px);
-    gap: 2px;
-    justify-content: center;
-    margin-bottom: 12px;
-  }
-  .word-cell {
-    width: 30px;
-    height: 30px;
-    border: 1px solid #999;
-    background-color: #ddd;
-    font-weight: 700;
-    font-size: 1rem;
-    color: #333;
-    cursor: pointer;
-    user-select: none;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .word-cell.selected {
-    background-color: #4bb8ff;
-    color: white;
-  }
-  .word-cell.found {
-    background-color: #1976d2;
-    color: white;
-    cursor: default;
-  }
-  [data-theme="dark"] .word-cell {
-    background-color: #333;
-    border-color: #555;
-    color: #eee;
-  }
-  [data-theme="dark"] .word-cell.selected {
-    background-color: #91ccff;
-    color: #222;
-  }
-  [data-theme="dark"] .word-cell.found {
-    background-color: #4bb8ff;
-    color: #222;
-  }
-  #wordsearch-words {
-    font-weight: 600;
-    font-size: 1rem;
-  }
-  #wordsearch-progress {
-    margin-top: 12px;
-    font-weight: 600;
-    font-size: 1rem;
-  }
-
-  /* Footer credit styling */
-  footer#credit {
-    text-align: center;
-    padding: 12px 0;
-    font-weight: 700;
-    font-size: 1.2rem;
-    font-family: 'Inter', sans-serif;
-    user-select: none;
-    background: linear-gradient(135deg, #0078d4, #4bb8ff);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
-    text-shadow: 0 0 6px rgba(75,184,255,0.75);
-    margin-top: 32px;
-    animation: glow 3s ease-in-out infinite alternate;
-  }
-  @keyframes glow {
-    from {
-      text-shadow: 0 0 8px rgba(75,184,255,0.5), 0 0 12px rgba(75,184,255,0.7);
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Multi-Game Seru - Puzzle & Kuis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Material+Icons&display=swap" rel="stylesheet" />
+  <style>
+    /* Reset and base */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
     }
-    to {
-      text-shadow: 0 0 16px rgba(75,184,255,1), 0 0 30px rgba(75,184,255,1);
-    }
-  }
 
-  /* Responsive adjustments */
-  @media (max-width: 480px) {
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+      color: #eee;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    a,
+    button {
+      font-family: inherit;
+    }
+
+    /* Layout */
+    #app {
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 1024px;
+      margin: 0 auto;
+      padding: 24px;
+      background: rgba(10, 20, 40, 0.8);
+      border-radius: 24px;
+      box-shadow: 0 0 30px rgba(75, 184, 255, 0.8), inset 0 0 40px rgba(75, 184, 255, 0.5);
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 18px;
+      border-bottom: 2px solid rgba(75, 184, 255, 0.7);
+      text-shadow: 0 0 8px rgba(75, 184, 255, 0.8);
+    }
+
+    h1 {
+      font-weight: 800;
+      font-size: 2rem;
+      color: #00bfff;
+      text-shadow: 0 0 8px #00bfff, 0 0 24px #00bfff;
+    }
+
+    #theme-toggle {
+      cursor: pointer;
+      background: linear-gradient(135deg, #04aaff, #0077d6);
+      border: none;
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 10px 20px;
+      border-radius: 16px;
+      box-shadow: 0 4px 12px rgba(0, 119, 214, 0.6);
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+      user-select: none;
+    }
+
+    #theme-toggle:hover,
+    #theme-toggle:focus {
+      background: linear-gradient(135deg, #00cfff, #0099ff);
+      box-shadow: 0 0 20px #00cfff;
+      outline: none;
+    }
+
+    main {
+      flex-grow: 1;
+      margin-top: 24px;
+      min-height: 500px;
+      overflow-y: auto;
+    }
+
+    /* Navigation and Game Selection */
     #game-menu {
-      grid-template-columns: repeat(auto-fill,minmax(160px,1fr));
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 28px;
     }
+
+    .game-card {
+      background: radial-gradient(ellipse at center, #012a4a 0%, #002f6c 100%);
+      border-radius: 24px;
+      box-shadow: 0 0 10px #00bfffaa, 0 8px 24px #004275aa inset;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 28px 20px;
+      cursor: pointer;
+      user-select: none;
+      transition: box-shadow 0.4s ease, transform 0.3s ease;
+      color: #a0d8ff;
+      font-weight: 700;
+      font-size: 1.15rem;
+      text-align: center;
+    }
+
+    .game-card:hover,
+    .game-card:focus {
+      box-shadow: 0 0 28px #00bfff, 0 12px 36px #0091ff inset;
+      transform: scale(1.05);
+      outline: none;
+      color: #ffffff;
+    }
+
+    .game-icon {
+      font-family: 'Material Icons';
+      font-size: 68px;
+      color: #00bfff;
+      margin-bottom: 16px;
+      text-shadow: 0 0 16px #00bfffaa;
+    }
+
+    .game-title {
+      user-select: none;
+    }
+
+    #game-container {
+      margin-top: 28px;
+      padding: 12px;
+      background: rgba(1, 35, 56, 0.72);
+      border-radius: 24px;
+      box-shadow: 0 0 30px #00bfffaa inset;
+      min-height: 500px;
+    }
+
+    #back-btn {
+      background: #00bfff;
+      color: #002f6c;
+      font-weight: bold;
+      border: none;
+      border-radius: 18px;
+      padding: 12px 24px;
+      cursor: pointer;
+      margin-bottom: 24px;
+      box-shadow: 0 0 14px #00bfff;
+      user-select: none;
+      transition: background-color 0.3s ease;
+      display: inline-block;
+    }
+
+    #back-btn:hover,
+    #back-btn:focus {
+      background-color: #0091ff;
+      color: white;
+      outline: none;
+    }
+
+    /* Puzzle Styles */
     #puzzle-board {
-      max-width: 320px;
-      gap: 6px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      max-width: 360px;
+      margin: 20px auto;
+      border-radius: 20px;
+      background: radial-gradient(circle at center, #023e8a 0%, #03045e 100%);
+      padding: 10px;
+      box-shadow: 0 0 24px #0077ff inset;
     }
+
+    .puzzle-tile {
+      background: linear-gradient(145deg, #0077ff, #003f8a);
+      color: white;
+      font-weight: 900;
+      font-size: 2rem;
+      border-radius: 16px;
+      user-select: none;
+      cursor: pointer;
+      box-shadow: 0 0 12px #00e0ff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      aspect-ratio: 1 / 1;
+      transition: transform 0.25s ease;
+    }
+
+    .puzzle-tile:hover:not(.empty),
+    .puzzle-tile:focus:not(.empty) {
+      transform: scale(1.1);
+      box-shadow: 0 0 24px #00ffff;
+      outline: none;
+    }
+
+    .puzzle-tile.empty {
+      background: transparent;
+      box-shadow: none;
+      cursor: default;
+    }
+
+    #puzzle-info {
+      color: #80dfff;
+      font-weight: 700;
+      text-align: center;
+      font-size: 1.2rem;
+      margin-bottom: 16px;
+    }
+
+    /* Quiz Styles */
+    #quiz-game {
+      max-width: 660px;
+      margin: 20px auto;
+      user-select: none;
+      color: #a0d8ff;
+      text-shadow: 0 0 2px #00d0ff;
+    }
+
+    #quiz-info,
+    #quiz-question,
+    #quiz-progress {
+      font-weight: 600;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    #quiz-info {
+      font-size: 1.1rem;
+    }
+
+    #quiz-question {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    #quiz-options {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .quiz-option {
+      background: #074d8c;
+      padding: 12px 16px;
+      font-size: 1rem;
+      border-radius: 16px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      color: #cae8ff;
+      font-weight: 600;
+      box-shadow: 0 0 10px #00aaff55;
+      transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+    }
+
+    .quiz-option:hover,
+    .quiz-option:focus {
+      background-color: #0bc0ff;
+      border-color: #00aaff;
+      color: #002f4a;
+      outline: none;
+      box-shadow: 0 0 20px #00ccff;
+    }
+
+    .quiz-option.correct {
+      background-color: #33ff77 !important;
+      color: #003322 !important;
+      border-color: #33ff77 !important;
+      box-shadow: 0 0 20px #33ff77 !important;
+    }
+
+    .quiz-option.incorrect {
+      background-color: #ff3344 !important;
+      color: #330000 !important;
+      border-color: #ff3344 !important;
+      box-shadow: 0 0 20px #ff3344 !important;
+    }
+
+    /* Riddle Styles */
+    #riddle-game {
+      max-width: 660px;
+      margin: 20px auto;
+      user-select: none;
+      color: #a0dfff;
+      text-shadow: 0 0 8px #00bfff;
+    }
+
+    #riddle-question {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    #riddle-clue {
+      font-style: italic;
+      margin-bottom: 16px;
+      color: #90caf9;
+    }
+
+    #riddle-answer-form {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    #riddle-answer {
+      flex-grow: 1;
+      padding: 10px 14px;
+      font-size: 1rem;
+      border-radius: 12px;
+      border: 2px solid #0068ff;
+      background: #022f5a;
+      color: #a8d5fc;
+      transition: border-color 0.3s ease;
+    }
+
+    #riddle-answer:focus {
+      outline: none;
+      border-color: #0bc0ff;
+      background: #0082ff;
+      color: #002f4a;
+    }
+
+    #riddle-submit {
+      background: #0bc0ff;
+      border: none;
+      color: #003342;
+      font-weight: 700;
+      font-size: 1rem;
+      border-radius: 12px;
+      padding: 10px 16px;
+      cursor: pointer;
+      filter: drop-shadow(0 0 8px #00c9ff);
+      transition: background-color 0.3s ease;
+    }
+
+    #riddle-submit:hover,
+    #riddle-submit:focus {
+      background: #00d7ff;
+      color: #001a20;
+      outline: none;
+      filter: drop-shadow(0 0 12px #00e7ff);
+    }
+
+    #riddle-feedback {
+      min-height: 24px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-top: 8px;
+      color: #00ffa5;
+      text-shadow: 0 0 6px #00ffaa;
+    }
+
+    /* Memory Styles */
+    #memory-game {
+      max-width: 600px;
+      margin: 20px auto;
+      user-select: none;
+      color: #a0d8ff;
+      text-shadow: 0 0 8px #00bfff;
+    }
+
+    #memory-info {
+      font-weight: 600;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
     #memory-board {
-      max-width: 320px;
-      gap: 6px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+      gap: 14px;
+      justify-content: center;
     }
-    #wordsearch-grid {
-      grid-template-columns: repeat(8, 30px);
-      grid-template-rows: repeat(8, 30px);
+
+    .memory-card {
+      background: linear-gradient(145deg, #004080, #001a33);
+      border-radius: 16px;
+      cursor: pointer;
+      perspective: 800px;
+      box-shadow: 0 0 15px #00bfff;
+      user-select: none;
+      position: relative;
+      width: 75px;
+      height: 75px;
     }
-  }
-</style>
+
+    .memory-inner {
+      position: relative;
+      width: 100%;
+      height: 0;
+      padding-bottom: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.5s ease;
+      border-radius: 16px;
+    }
+
+    .memory-card.flipped .memory-inner {
+      transform: rotateY(180deg);
+    }
+
+    .memory-front,
+    .memory-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 16px;
+      backface-visibility: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 36px;
+      color: white;
+    }
+
+    .memory-front {
+      background: #0078d4;
+    }
+
+    .memory-back {
+      background: #eee;
+      color: #0078d4;
+      font-family: 'Material Icons';
+      transform: rotateY(180deg);
+    }
+
+    .memory-card.disabled {
+      cursor: default;
+      opacity: 0.6;
+      box-shadow: none;
+    }
+
+    /* Footer credit */
+    footer#credit {
+      text-align: center;
+      padding: 16px 0;
+      font-weight: 700;
+      font-size: 1.25rem;
+      user-select: none;
+      color: #61dafb;
+      text-shadow: 0 0 8px #61dafb;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      #game-menu {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      }
+      #puzzle-board {
+        max-width: 320px;
+        gap: 6px;
+      }
+      #memory-board {
+        max-width: 320px;
+        gap: 8px;
+      }
+    }
+  </style>
 </head>
+
 <body data-theme="light">
-  <div id="app" role="main">
+  <div id="app" role="main" aria-label="Aplikasi Multi-Game Seru">
     <header>
       <h1>Multi-Game Seru</h1>
       <button id="theme-toggle" aria-pressed="false" aria-label="Ganti mode terang dan gelap">Mode Gelap</button>
     </header>
     <main>
-      <!-- Menu Pilihan Game -->
       <section id="game-menu" aria-label="Pilih game yang ingin dimainkan">
         <div class="game-card" tabindex="0" role="button" data-game="puzzle" aria-describedby="puzzle-desc">
           <span class="game-icon material-icons" aria-hidden="true">extension</span>
           <div class="game-title">Puzzle Geser</div>
-          <div id="puzzle-desc" class="visually-hidden">Mainkan puzzle geser klasik dengan angka</div>
+          <div id="puzzle-desc" class="visually-hidden">Mainkan puzzle geser klasik dengan angka pada grid 4x4.</div>
         </div>
         <div class="game-card" tabindex="0" role="button" data-game="quiz" aria-describedby="quiz-desc">
           <span class="game-icon material-icons" aria-hidden="true">quiz</span>
           <div class="game-title">Kuis Trivia</div>
-          <div id="quiz-desc" class="visually-hidden">Jawab pertanyaan berdasarkan level dengan tingkat kesulitan bertahap</div>
+          <div id="quiz-desc" class="visually-hidden">Jawab 5 pertanyaan per level dengan tingkat kesulitan bertahap (total 50 level).</div>
         </div>
         <div class="game-card" tabindex="0" role="button" data-game="riddle" aria-describedby="riddle-desc">
           <span class="game-icon material-icons" aria-hidden="true">help_outline</span>
           <div class="game-title">Teka Teki</div>
-          <div id="riddle-desc" class="visually-hidden">Pecahkan teka teki dengan petunjuk dan umpan balik</div>
+          <div id="riddle-desc" class="visually-hidden">Pecahkan teka teki dengan petunjuk untuk memudahkan jawaban.</div>
         </div>
         <div class="game-card" tabindex="0" role="button" data-game="memory" aria-describedby="memory-desc">
           <span class="game-icon material-icons" aria-hidden="true">memory</span>
           <div class="game-title">Pasang Memori</div>
-          <div id="memory-desc" class="visually-hidden">Main game ingatan mencocokkan kartu</div>
-        </div>
-        <div class="game-card" tabindex="0" role="button" data-game="wordsearch" aria-describedby="wordsearch-desc">
-          <span class="game-icon material-icons" aria-hidden="true">search</span>
-          <div class="game-title">Cari Kata</div>
-          <div id="wordsearch-desc" class="visually-hidden">Permainan mencari kata dalam grid huruf</div>
+          <div id="memory-desc" class="visually-hidden">Cocokkan kartu berpasangan dengan jumlah kartu bertambah pada tiap level.</div>
         </div>
       </section>
-
-      <!-- Kontainer Game -->
-      <section id="game-container" aria-live="polite">
-        <!-- Konten game dimuat oleh JavaScript -->
+      <section id="game-container" aria-live="polite" aria-atomic="true" aria-relevant="additions">
+        <p style="color: #a0d8ff; font-size: 1.1rem; padding: 20px; text-align: center; user-select: none;">
+          Pilih game dari menu di atas untuk mulai bermain. Selamat bersenang-senang!
+        </p>
       </section>
     </main>
   </div>
-
   <footer id="credit" aria-label="Kredit aplikasi">By AlFa</footer>
 
   <script>
     (() => {
-      // Utils
+      const STORAGE_KEY = "multiGameAppStateV3";
+
       function saveState(state) {
-        localStorage.setItem('multiGameAppStateV2', JSON.stringify(state));
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       }
+
       function loadState() {
         try {
-          let raw = localStorage.getItem('multiGameAppStateV2');
-          if(raw) return JSON.parse(raw);
-        } catch (e) {}
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) return JSON.parse(raw);
+        } catch { }
         return null;
       }
-      // Current app state
+
       let appState = {
         theme: "light",
-        puzzle: {level: 1, score: 0},
-        quiz: {level: 1, score: 0},
-        riddle: {index: 0, correctCount: 0, level: 1},
-        memory: {bestScore: 0, level: 1, score: 0},
-        wordsearch: {foundWords: [], level: 1, score: 0}
+        puzzle: { level: 1, score: 0 },
+        quiz: { level: 1, score: 0 },
+        riddle: { index: 0, correctCount: 0, level: 1 },
+        memory: { bestScore: 0, level: 1, score: 0 },
       };
-      const storedState = loadState();
-      if(storedState) appState = Object.assign(appState, storedState);
 
-      const gameContainer = document.getElementById('game-container');
-      const themeToggle = document.getElementById('theme-toggle');
-      const gameMenu = document.getElementById('game-menu');
+      const savedState = loadState();
+      if (savedState) appState = { ...appState, ...savedState };
+
+      const gameContainer = document.getElementById("game-container");
+      const themeToggle = document.getElementById("theme-toggle");
+      const gameMenu = document.getElementById("game-menu");
       const body = document.body;
 
-      themeToggle.addEventListener('click', () => {
-        const newTheme = body.dataset.theme=='light'?'dark':'light';
-        setTheme(newTheme);
-      });
       function setTheme(theme) {
         body.dataset.theme = theme;
-        themeToggle.textContent = theme=='light'?'Mode Gelap':'Mode Terang';
-        themeToggle.setAttribute('aria-pressed', theme!='light');
+        themeToggle.textContent = theme == "light" ? "Mode Gelap" : "Mode Terang";
+        themeToggle.setAttribute("aria-pressed", theme != "light");
         appState.theme = theme;
         saveState(appState);
       }
       setTheme(appState.theme);
 
-      function showGameMenu() {
-        gameContainer.innerHTML = '';
-        gameMenu.style.display = 'grid';
-        document.getElementById('back-btn')?.remove();
-        gameContainer.setAttribute('aria-live','polite');
-        setTimeout(() => {
-          const firstCard = gameMenu.querySelector('.game-card');
-          if(firstCard) firstCard.focus();
-        }, 100);
-      }
-      function createBackButton(){
-        const btn = document.createElement('button');
-        btn.textContent='← Kembali ke Menu';
-        btn.id='back-btn';
-        btn.style.marginBottom='20px';
-        btn.style.backgroundColor='#0078d4';
-        btn.style.border='none';
-        btn.style.color='white';
-        btn.style.fontWeight='600';
-        btn.style.padding='8px 16px';
-        btn.style.borderRadius='12px';
-        btn.style.cursor='pointer';
-        btn.style.transition='background-color 0.3s ease';
-        btn.addEventListener('mouseenter',()=> btn.style.backgroundColor='#005ea3');
-        btn.addEventListener('mouseleave',()=> btn.style.backgroundColor='#0078d4');
-        btn.addEventListener('focus',()=> btn.style.backgroundColor='#005ea3');
-        btn.addEventListener('blur',()=> btn.style.backgroundColor='#0078d4');
-        btn.addEventListener('click',()=>showGameMenu());
-        const mainEl = document.querySelector('main');
+      themeToggle.onclick = () => setTheme(body.dataset.theme == "light" ? "dark" : "light");
+
+      function createBackButton() {
+        if (document.getElementById("back-btn")) return;
+        const btn = document.createElement("button");
+        btn.id = "back-btn";
+        btn.textContent = "← Kembali ke Menu";
+        btn.onclick = () => showGameMenu();
+        btn.style.marginBottom = "20px";
+        const mainEl = document.querySelector("main");
         mainEl.insertBefore(btn, gameContainer);
       }
 
-      // Wordsearch Game
-      function loadWordSearchGame(){
-        gameMenu.style.display='none';
-        gameContainer.innerHTML='';
-        createBackButton();
-
-        const wordsearchEl = document.createElement('section');
-        wordsearchEl.id='wordsearch-game';
-        wordsearchEl.style.maxWidth='600px';
-        wordsearchEl.style.margin='0 auto';
-        wordsearchEl.style.userSelect='none';
-        wordsearchEl.style.textAlign='center';
-
-        const infoEl = document.createElement('div');
-        infoEl.id='wordsearch-info';
-        infoEl.style.fontWeight='600';
-        infoEl.style.fontSize='1.2rem';
-        infoEl.style.marginBottom='12px';
-        wordsearchEl.appendChild(infoEl);
-
-        const progressEl = document.createElement('div');
-        progressEl.id = 'wordsearch-progress';
-        progressEl.style.marginTop = '12px';
-        progressEl.style.fontWeight = '600';
-        progressEl.style.fontSize = '1rem';
-        wordsearchEl.appendChild(progressEl);
-
-        const gridEl = document.createElement('div');
-        gridEl.id='wordsearch-grid';
-        gridEl.style.display='grid';
-        gridEl.style.gridTemplateColumns='repeat(10, 30px)';
-        gridEl.style.gridTemplateRows='repeat(10, 30px)';
-        gridEl.style.gap='2px';
-        gridEl.style.justifyContent='center';
-        gridEl.style.marginBottom='12px';
-        wordsearchEl.appendChild(gridEl);
-
-        const wordsEl = document.createElement('div');
-        wordsEl.id='wordsearch-words';
-        wordsEl.style.textAlign='center';
-        wordsEl.style.fontWeight='600';
-        wordsEl.style.fontSize = '1rem';
-        wordsearchEl.appendChild(wordsEl);
-
-        gameContainer.appendChild(wordsearchEl);
-
-        const words = [
-          "INDONESIA",
-          "COMPUTER",
-          "JAVASCRIPT",
-          "PUZZLE",
-          "GAME",
-          "ALFA",
-          "PUZZLING",
-          "LOGIKA",
-          "FOKUS",
-          "TANTANGAN"
-        ];
-
-        const gridSize = 10;
-        const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        let grid = [];
-
-        for(let i=0;i<gridSize*gridSize;i++){
-          grid[i] = letters.charAt(Math.floor(Math.random()*letters.length));
-        }
-
-        // Letakkan kata secara horizontal sederhana mulai di tiap baris ke-i
-        words.forEach((word,i)=>{
-          let startRow = i;
-          let startCol = 0;
-          for(let j=0;j<word.length;j++){
-            grid[startRow*gridSize + startCol + j] = word.charAt(j);
-          }
-        });
-
-        gridEl.innerHTML = '';
-        wordsEl.textContent='Temukan kata-kata: '+words.join(', ');
-
-        // Selection state
-        let selecting = false;
-        let firstCell = null;
-        let selectedCells = [];
-        let foundWords = new Set(appState.wordsearch.foundWords || []);
-
-        function renderGrid(){
-          gridEl.innerHTML='';
-          for(let i=0;i<grid.length;i++){
-            const cell = document.createElement('button');
-            cell.className='word-cell';
-            cell.textContent=grid[i];
-            cell.dataset.index=i;
-            cell.setAttribute('aria-label',`Huruf ${grid[i]}`);
-            if(foundWords.size && wordHasCell(i)) cell.classList.add('found');
-            if(selectedCells.includes(i)) cell.classList.add('selected');
-
-            if(foundWords.size && wordHasCell(i)){
-              cell.disabled=true;
-              cell.style.cursor='default';
-            }
-            cell.addEventListener('click',()=>handleCellClick(i));
-            cell.addEventListener('keydown', e=>{
-              if(e.key==='Enter' || e.key===' '){
-                e.preventDefault();
-                handleCellClick(i);
-              }
-            });
-            gridEl.appendChild(cell);
-          }
-          updateProgress();
-        }
-
-        // Helper: cek huruf index apakan bagian kata yg sudah ditemukan
-        function wordHasCell(index){
-          for(const w of foundWords){
-            let wIdxs = wordIndexes(w);
-            if(wIdxs.includes(index)) return true;
-          }
-          return false;
-        }
-
-        // Cari index sel grid kata secara horizontal mulai baris ke-i
-        function wordIndexes(word){
-          for(let row=0;row<gridSize;row++){
-            for(let col=0;col<=gridSize-word.length;col++){
-              let match=true;
-              for(let k=0;k<word.length;k++){
-                if(grid[row*gridSize + col + k]!==word.charAt(k)) match=false;
-              }
-              if(match){
-                return Array.from({length:word.length},(_,m)=> row*gridSize + col + m);
-              }
-            }
-          }
-          return [];
-        }
-
-        function handleCellClick(idx){
-          if(foundWords.size && wordHasCell(idx)) return;
-          if(!selecting){
-            // mulai memilih
-            selecting=true;
-            firstCell=idx;
-            selectedCells=[idx];
-            renderGrid();
-          } else {
-            // selesai memilih, cek apakah garis lurus horizontal atau vertikal & kata valid
-            const secondCell=idx;
-            selectedCells = getLineIndexes(firstCell, secondCell);
-            if(selectedCells.length>1){ // bentuk garis
-              let selectedWord="";
-              selectedCells.forEach(i=>{
-                selectedWord+=grid[i];
-              });
-              const foundWord = words.find(w=> w===selectedWord || w===reverseString(selectedWord));
-              if(foundWord && !foundWords.has(foundWord)){
-                foundWords.add(foundWord);
-                appState.wordsearch.foundWords = Array.from(foundWords);
-                appState.wordsearch.score = (appState.wordsearch.score||0) + foundWord.length * 10;
-                saveState(appState);
-                alert(`Kamu menemukan kata: ${foundWord}!`);
-                selectedCells=[];
-                selecting=false;
-                firstCell=null;
-                renderGrid();
-                if(foundWords.size === words.length){
-                  alert('Selamat! Kamu menemukan semua kata.');
-                }
-                return;
-              }
-            }
-            // tidak valid, batalkan dan ulangi
-            alert('Kata tidak sesuai atau sudah ditemukan, coba lagi.');
-            selectedCells=[];
-            selecting=false;
-            firstCell=null;
-            renderGrid();
-          }
-        }
-
-        // Dapatkan garis index antara 2 posisi sel (hanya horizontal atau vertikal dikenali)
-        function getLineIndexes(i1,i2){
-          // jika i1 dan i2 di baris sama
-          if(Math.floor(i1/gridSize) === Math.floor(i2/gridSize)){
-            const row = Math.floor(i1/gridSize);
-            const start = Math.min(i1,i2);
-            const end = Math.max(i1,i2);
-            let arr=[];
-            for(let c=start;c<=end;c++) arr.push(c);
-            return arr;
-          }
-          // jika i1 dan i2 di kolom sama
-          if(i1%gridSize === i2%gridSize){
-            const col = i1%gridSize;
-            const startRow = Math.min(Math.floor(i1/gridSize), Math.floor(i2/gridSize));
-            const endRow = Math.max(Math.floor(i1/gridSize), Math.floor(i2/gridSize));
-            let arr = [];
-            for(let r=startRow;r<=endRow;r++){
-              arr.push(r*gridSize + col);
-            }
-            return arr;
-          }
-          return []; // bukan garis lurus valid
-        }
-
-        function reverseString(str){
-          return str.split('').reverse().join('');
-        }
-
-        function updateProgress(){
-          progressEl.textContent = `Kata ditemukan: ${foundWords.size} / ${words.length} | Skor: ${appState.wordsearch.score || 0}`;
-        }
-
-        renderGrid();
-        updateProgress();
+      function showGameMenu() {
+        gameContainer.innerHTML = "";
+        gameMenu.style.display = "grid";
+        const backBtn = document.getElementById("back-btn");
+        if (backBtn) backBtn.remove();
+        gameContainer.setAttribute("aria-live", "polite");
+        setTimeout(() => {
+          const firstCard = gameMenu.querySelector(".game-card");
+          if (firstCard) firstCard.focus();
+        }, 100);
       }
 
-      // Setup event listeners untuk pilihan game
-      gameMenu.querySelectorAll(".game-card").forEach(card => {
+      // Puzzle Game
+      function loadPuzzleGame() {
+        gameMenu.style.display = "none";
+        gameContainer.innerHTML = "";
+        createBackButton();
+
+        const section = document.createElement("section");
+        section.id = "puzzle-game";
+
+        const info = document.createElement("div");
+        info.id = "puzzle-info";
+        section.appendChild(info);
+
+        const board = document.createElement("div");
+        board.id = "puzzle-board";
+        board.style.gridTemplateColumns = "repeat(4, 1fr)";
+        board.style.width = "360px";
+        section.appendChild(board);
+        gameContainer.appendChild(section);
+
+        let level = appState.puzzle.level || 1;
+        let score = appState.puzzle.score || 0;
+        let tiles = Array.from({ length: 15 }, (_, i) => i + 1);
+        tiles.push(null);
+        let emptyIndex = 15;
+
+        function isSolvable(arr) {
+          let inversions = 0;
+          for (let i = 0; i < arr.length - 1; i++) {
+            for (let j = i + 1; j < arr.length; j++) {
+              if (arr[i] && arr[j] && arr[i] > arr[j]) inversions++;
+            }
+          }
+          const rowFromBottom = 4 - Math.floor(emptyIndex / 4);
+          if (4 % 2 === 1) return inversions % 2 === 0;
+          else {
+            if (rowFromBottom % 2 === 0) return inversions % 2 === 1;
+            else return inversions % 2 === 0;
+          }
+        }
+
+        function shuffle() {
+          do {
+            for (let i = tiles.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+            }
+            emptyIndex = tiles.indexOf(null);
+          } while (!isSolvable(tiles));
+        }
+
+        function render() {
+          info.textContent = `Level: ${level} | Skor: ${score}`;
+          board.innerHTML = "";
+          tiles.forEach((num, i) => {
+            const tileEl = document.createElement("button");
+            tileEl.classList.add("puzzle-tile");
+            if (num === null) {
+              tileEl.classList.add("empty");
+              tileEl.disabled = true;
+              tileEl.setAttribute("aria-label", "Posisi kosong");
+            } else {
+              tileEl.textContent = num;
+              tileEl.setAttribute("aria-label", `Ubin ${num}`);
+              tileEl.onclick = () => {
+                if (canMove(i)) moveTile(i);
+              };
+              tileEl.onkeydown = (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  if (canMove(i)) moveTile(i);
+                }
+              };
+            }
+            board.appendChild(tileEl);
+          });
+        }
+
+        function canMove(idx) {
+          const emptyRow = Math.floor(emptyIndex / 4);
+          const emptyCol = emptyIndex % 4;
+          const idxRow = Math.floor(idx / 4);
+          const idxCol = idx % 4;
+          return (idxRow === emptyRow && Math.abs(idxCol - emptyCol) === 1) || (idxCol === emptyCol && Math.abs(idxRow - emptyRow) === 1);
+        }
+
+        function moveTile(idx) {
+          [tiles[idx], tiles[emptyIndex]] = [tiles[emptyIndex], tiles[idx]];
+          emptyIndex = idx;
+          score += 5 + level;
+          render();
+          if (checkWin()) {
+            alert(`Selamat! Kamu menyelesaikan puzzle.`);
+            level = Math.min(level + 1, 50);
+            appState.puzzle.level = level;
+            appState.puzzle.score = score;
+            saveState(appState);
+            shuffle();
+            render();
+          }
+        }
+
+        function checkWin() {
+          for (let i = 0; i < tiles.length - 1; i++) {
+            if (tiles[i] !== i + 1) return false;
+          }
+          return true;
+        }
+        shuffle();
+        render();
+      }
+
+      // Quiz Game
+      function loadQuizGame() {
+        gameMenu.style.display = "none";
+        gameContainer.innerHTML = "";
+        createBackButton();
+
+        const section = document.createElement("section");
+        section.id = "quiz-game";
+
+        const info = document.createElement("div");
+        info.id = "quiz-info";
+        section.appendChild(info);
+
+        const question = document.createElement("div");
+        question.id = "quiz-question";
+        section.appendChild(question);
+
+        const options = document.createElement("div");
+        options.id = "quiz-options";
+        section.appendChild(options);
+
+        const progress = document.createElement("div");
+        progress.id = "quiz-progress";
+        section.appendChild(progress);
+
+        gameContainer.appendChild(section);
+
+        const localQuizDB = (() => {
+          const baseQuestions = [
+            {
+              question: "Berapa hasil dari 2 + 2?",
+              correct_answer: "4",
+              options: ["1", "4", "3", "2"]
+            },
+            {
+              question: "Siapa penulis novel 'Laskar Pelangi'?",
+              correct_answer: "Andrea Hirata",
+              options: ["Andrea Hirata", "Dewi Lestari", "Pramoedya Ananta Toer", "Tere Liye"]
+            },
+            {
+              question: "Ibukota Indonesia adalah?",
+              correct_answer: "Jakarta",
+              options: ["Jakarta", "Bandung", "Surabaya", "Medan"]
+            },
+            {
+              question: "Bendera Indonesia berwarna?",
+              correct_answer: "Merah dan Putih",
+              options: ["Merah dan Putih", "Biru dan Putih", "Merah dan Biru", "Hijau dan Kuning"]
+            },
+            {
+              question: "Gunung tertinggi di Indonesia adalah?",
+              correct_answer: "Puncak Jaya",
+              options: ["Puncak Jaya", "Kerinci", "Semeru", "Rinjani"]
+            }
+          ];
+          let levels = [];
+          for (let i = 0; i < 50; i++) levels.push(baseQuestions);
+          return levels;
+        })();
+
+        let level = appState.quiz.level || 1;
+        let score = 0;
+        let currentQuestionIndex = 0;
+        let questions = [];
+
+        function updateInfo() { info.textContent = `Level: ${level} | Skor: ${score}`; }
+
+        function startLevel() {
+          score = 0;
+          currentQuestionIndex = 0;
+          questions = localQuizDB[level - 1] || localQuizDB[0];
+          updateInfo();
+          showQuestion();
+        }
+        function showQuestion() {
+          if (currentQuestionIndex >= questions.length) {
+            alert(`Level ${level} selesai! Skor Anda: ${score}/${questions.length}`);
+            level = Math.min(level + 1, 50);
+            appState.quiz.level = level;
+            appState.quiz.score = score;
+            saveState(appState);
+            startLevel();
+            return;
+          }
+          updateInfo();
+          question.textContent = `Pertanyaan ${currentQuestionIndex + 1}: ${questions[currentQuestionIndex].question}`;
+          options.innerHTML = '';
+          progress.textContent = `Level ${level} | Pertanyaan ${currentQuestionIndex + 1} dari ${questions.length}`;
+          questions[currentQuestionIndex].options.forEach(optionText => {
+            const btn = document.createElement('button');
+            btn.className = 'quiz-option';
+            btn.textContent = optionText;
+            btn.tabIndex = 0;
+            btn.onclick = () => checkAnswer(optionText, btn);
+            btn.onkeydown = e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                checkAnswer(optionText, btn);
+              }
+            };
+            options.appendChild(btn);
+          });
+        }
+        function checkAnswer(selected, btn) {
+          const curQ = questions[currentQuestionIndex];
+          Array.from(options.children).forEach(b => {
+            b.disabled = true;
+            if (b.textContent === curQ.correct_answer) b.classList.add('correct');
+            if (b.textContent === selected && selected !== curQ.correct_answer) b.classList.add('incorrect');
+          });
+          if (selected === curQ.correct_answer) score++;
+          updateInfo();
+          currentQuestionIndex++;
+          setTimeout(showQuestion, 1500);
+        }
+        startLevel();
+      }
+
+      // Riddle Game
+      function loadRiddleGame() {
+        gameMenu.style.display = 'none';
+        gameContainer.innerHTML = '';
+        createBackButton();
+
+        const section = document.createElement('section');
+        section.id = 'riddle-game';
+
+        const question = document.createElement('div');
+        question.id = 'riddle-question';
+        section.appendChild(question);
+
+        const clue = document.createElement('div');
+        clue.id = 'riddle-clue';
+        section.appendChild(clue);
+
+        const form = document.createElement('form');
+        form.id = 'riddle-answer-form';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'riddle-answer';
+        input.setAttribute('aria-label', 'Ketik jawaban Anda di sini');
+        input.autocomplete = 'off';
+        input.required = true;
+        form.appendChild(input);
+
+        const submitBtn = document.createElement('button');
+        submitBtn.type = 'submit';
+        submitBtn.id = 'riddle-submit';
+        submitBtn.textContent = 'Kirim Jawaban';
+        form.appendChild(submitBtn);
+
+        section.appendChild(form);
+
+        const feedback = document.createElement('div');
+        feedback.id = 'riddle-feedback';
+        section.appendChild(feedback);
+
+        const scoreEl = document.createElement('div');
+        scoreEl.id = 'riddle-score';
+        section.appendChild(scoreEl);
+
+        const levelEl = document.createElement('div');
+        levelEl.id = 'riddle-level';
+        section.appendChild(levelEl);
+
+        gameContainer.appendChild(section);
+
+        const riddles = [
+          {
+            question: "Aku berbicara tanpa mulut dan mendengar tanpa telinga. Aku tidak mempunyai tubuh, tapi aku hidup dengan angin. Siapakah aku?",
+            answer: /gaung|gema|echo/i,
+            hint: "Ini adalah pengulangan suara."
+          },
+          {
+            question: "Apa yang punya kunci tapi tidak bisa membuka pintu?",
+            answer: /piano|keyboard|papan ketik/i,
+            hint: "Biasanya digunakan untuk bermain musik atau mengetik."
+          },
+          {
+            question: "Apa yang muncul sekali dalam semenit, dua kali dalam sesaat, tapi tidak pernah dalam seribu tahun?",
+            answer: /m/i,
+            hint: "Perhatikan huruf dalam kata-kata tersebut."
+          },
+          {
+            question: "Apa yang punya tangan tapi tidak bisa bertepuk tangan?",
+            answer: /jam/i,
+            hint: "Memberitahu waktu."
+          },
+          {
+            question: "Apa yang bisa berkeliling dunia sambil tetap di tempat yang sama?",
+            answer: /perangko|prangko/i,
+            hint: "Digunakan pada amplop surat."
+          }
+        ];
+
+        let level = appState.riddle.level || 1;
+        let currentIndex = appState.riddle.index || 0;
+        let correctCount = appState.riddle.correctCount || 0;
+
+        function showRiddle() {
+          feedback.textContent = '';
+          input.value = '';
+          input.focus();
+
+          const shiftedIndex = (currentIndex + (level - 1)) % riddles.length;
+          const riddle = riddles[shiftedIndex];
+          question.textContent = `Teka Teki ${currentIndex + 1} (Level ${level}): ${riddle.question}`;
+          clue.textContent = `Petunjuk: ${riddle.hint}`;
+          scoreEl.textContent = `Jawaban benar: ${correctCount} dari ${riddles.length}`;
+          levelEl.textContent = `Level saat ini: ${level}`;
+        }
+
+        form.onsubmit = e => {
+          e.preventDefault();
+          const userAnswer = input.value.trim();
+          if (!userAnswer) return;
+          const shiftedIndex = (currentIndex + (level - 1)) % riddles.length;
+          const riddle = riddles[shiftedIndex];
+          if (riddle.answer.test(userAnswer)) {
+            feedback.textContent = "Jawaban benar!";
+            correctCount++;
+          } else {
+            feedback.textContent = "Jawaban salah. Coba lagi atau gunakan petunjuk.";
+          }
+          currentIndex++;
+          appState.riddle.index = currentIndex;
+          appState.riddle.correctCount = correctCount;
+          if (currentIndex >= riddles.length) {
+            alert(`Level ${level} selesai! Jawaban benar: ${correctCount} dari ${riddles.length}.`);
+            level = Math.min(level + 1, 50);
+            appState.riddle.level = level;
+            appState.riddle.index = 0;
+            correctCount = 0;
+            appState.riddle.correctCount = 0;
+          }
+          saveState(appState);
+          setTimeout(showRiddle, 1200);
+        };
+        showRiddle();
+      }
+
+      // Memory Game
+      function loadMemoryGame() {
+        gameMenu.style.display = "none";
+        gameContainer.innerHTML = "";
+        createBackButton();
+
+        const section = document.createElement("section");
+        section.id = "memory-game";
+
+        const info = document.createElement("div");
+        info.id = "memory-info";
+        section.appendChild(info);
+
+        const board = document.createElement("div");
+        board.id = "memory-board";
+        section.appendChild(board);
+
+        gameContainer.appendChild(section);
+
+        const memoryIcons = [
+          "sports_esports", "emoji_objects", "videogame_asset", "gamepad",
+          "casino", "theater_comedy", "code", "home", "star", "favorite",
+          "android", "apple", "bug_report", "build", "cached", "cloud",
+          "deck", "directions_bike", "emoji_events", "face", "flash_on",
+          "gavel", "headset", "image", "keyboard", "lightbulb", "lock",
+          "pets", "public", "school", "security", "sentiment_satisfied",
+          "settings", "speakers", "star_rate"
+        ];
+
+        let level = appState.memory.level || 1;
+        let score = 0;
+        let bestScore = appState.memory.bestScore || 0;
+        let cards = [];
+        let firstCard = null;
+        let lockBoard = false;
+        let matches = 0;
+
+        const maxPairs = Math.min(17, 4 + Math.floor((level - 1) * 13 / 49));
+
+        function updateInfo() {
+          info.textContent = `Level: ${level} | Skor Saat Ini: ${score} | Skor Terbaik: ${bestScore}`;
+        }
+
+        function shuffle(array) {
+          for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+          }
+          return array;
+        }
+
+        function initBoard() {
+          board.innerHTML = "";
+          matches = 0;
+          score = 0;
+          firstCard = null;
+          lockBoard = false;
+
+          let pairsArr = memoryIcons.slice(0, maxPairs);
+          pairsArr = pairsArr.concat(pairsArr);
+          shuffle(pairsArr);
+
+          cards = [];
+
+          pairsArr.forEach((iconName) => {
+            const card = document.createElement("button");
+            card.className = "memory-card";
+            card.setAttribute("aria-label", "Kartu memori");
+            card.dataset.icon = iconName;
+
+            card.innerHTML = `
+              <div class="memory-inner">
+                <div class="memory-front"></div>
+                <div class="memory-back material-icons">${iconName}</div>
+              </div>`;
+
+            card.addEventListener("click", () => flipCard(card));
+            card.addEventListener("keydown", e => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                flipCard(card);
+              }
+            });
+            board.appendChild(card);
+            cards.push(card);
+          });
+          updateInfo();
+        }
+
+        function flipCard(card) {
+          if (lockBoard) return;
+          if (card === firstCard) return;
+          card.classList.add("flipped");
+          if (!firstCard) {
+            firstCard = card;
+            return;
+          }
+          lockBoard = true;
+          if (card.dataset.icon === firstCard.dataset.icon) {
+            matches++;
+            score += 10;
+            lockBoard = false;
+            card.classList.add("disabled");
+            firstCard.classList.add("disabled");
+            firstCard = null;
+            if (matches === maxPairs) {
+              if (score > bestScore) bestScore = score;
+              alert(`Hebat! Kamu menyelesaikan level ${level} dengan skor ${score}.`);
+              level = Math.min(level + 1, 50);
+              appState.memory.level = level;
+              appState.memory.bestScore = bestScore;
+              appState.memory.score = 0;
+              saveState(appState);
+              initBoard();
+            } else {
+              updateInfo();
+            }
+          } else {
+            setTimeout(() => {
+              card.classList.remove("flipped");
+              firstCard.classList.remove("flipped");
+              lockBoard = false;
+              firstCard = null;
+              updateInfo();
+            }, 900);
+          }
+        }
+
+        initBoard();
+      }
+
+      // Attach event listeners for game menu
+      gameMenu.querySelectorAll(".game-card").forEach((card) => {
         card.addEventListener("click", () => {
           const game = card.getAttribute("data-game");
-          switch(game){
-            case "puzzle": loadPuzzleGame(); break;
-            case "quiz": loadQuizGame(); break;
-            case "riddle": loadRiddleGame(); break;
-            case "memory": loadMemoryGame(); break;
-            case "wordsearch": loadWordSearchGame(); break;
+          switch (game) {
+            case "puzzle":
+              loadPuzzleGame();
+              break;
+            case "quiz":
+              loadQuizGame();
+              break;
+            case "riddle":
+              loadRiddleGame();
+              break;
+            case "memory":
+              loadMemoryGame();
+              break;
           }
         });
-        card.addEventListener("keydown", e => {
-          if(e.key === "Enter" || e.key === " ") {
+        card.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             e.target.click();
           }
@@ -884,11 +1084,17 @@
   </script>
 
   <style>
-    .visually-hidden { 
-      position: absolute !important; width: 1px; height: 1px; 
-      margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); 
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
       border: 0;
     }
   </style>
 </body>
+
 </html>
