@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dodge Falling Hearts - Game Tantangan Seru</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+<style>
+  /* Reset */
+  * {
+    margin: 0; padding: 0; box-sizing: border-box;
+  }
+  html, body {
+    height: 100%;
+    font-family: 'Poppins', sans-serif;
+    background: #fff0f5;
+    color: #5b2e67;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 16px;
+    user-select: none;
+    overflow-x: hidden;
+    transition: background-color 0.4s ease, color 0.4s ease;
+  }
+  body.dark {
+    background: #282235;
+    color: #e5d6f0;
+  }
+  header {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #b73e7c;
+  }
+  .mode-toggle {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+  .mode-toggle span {
+    margin-right: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #b73e7c;
+  }
+  body.dark .mode-toggle span {
+    color: #e5d6f0;
+  }
+  button.toggle-btn {
+    border: none;
+    background: transparent;
+    color: #b73e7c;
+    font-size: 28px;
+    transition: color 0.3s ease;
+  }
+  body.dark button.toggle-btn {
+    color: #e5d6f0;
+  }
+  button.toggle-btn:focus-visible {
+    outline: 2px solid #d68cc2;
+    outline-offset: 2px;
+  }
+
+  main {
+    max-width: 480px;
+    width: 100%;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 14px 40px rgba(183, 62, 124, 0.25);
+    padding: 20px 24px 32px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: background-color 0.4s ease;
+  }
+  body.dark main {
+    background: #3f3760;
+    box-shadow: 0 14px 40px rgba(229, 214, 240, 0.25);
+  }
+
+  #gameCanvas {
+    background: linear-gradient(180deg, #ffe4f2 0%, #ffc8e6 100%);
+    border-radius: 20px;
+    box-shadow: inset 0 8px 20px rgba(183, 62, 124, 0.3);
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    display: block;
+  }
+  body.dark #gameCanvas {
+    background: linear-gradient(180deg, #6e5f9b 0%, #5b4a81 100%);
+    box-shadow: inset 0 8px 20px rgba(229, 214, 240, 0.3);
+  }
+
+  #scoreboard {
+    margin: 20px 0 12px 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #832c64;
+  }
+  body.dark #scoreboard {
+    color: #f0d9ff;
+  }
+
+  #controls {
+    width: 100%;
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    margin-bottom: 8px;
+  }
+
+  button.control-btn {
+    background-color: #b73e7c;
+    border: none;
+    border-radius: 16px;
+    padding: 14px 36px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(183, 62, 124, 0.5);
+    transition: background-color 0.3s ease;
+  }
+  button.control-btn:hover:not(:disabled) {
+    background-color: #e270ae;
+  }
+  button.control-btn:disabled {
+    background-color: #d89fbd;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  body.dark button.control-btn {
+    background-color: #9e3170;
+    box-shadow: 0 8px 20px rgba(229, 214, 240, 0.8);
+  }
+  body.dark button.control-btn:hover:not(:disabled) {
+    background-color: #d291c2;
+  }
+
+  #message {
+    font-weight: 600;
+    height: 1.6rem;
+    text-align: center;
+    color: #913b6a;
+    min-height: 1.4rem;
+    margin-bottom: 12px;
+  }
+  body.dark #message {
+    color: #f2dfff;
+  }
+
+  /* Instructions */
+  #instructions {
+    margin-bottom: 16px;
+    font-size: 1rem;
+    color: #bb5a92;
+    text-align: center;
+  }
+  body.dark #instructions {
+    color: #e5ccf1;
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    main {
+      padding: 16px 16px 28px 16px;
+    }
+    button.control-btn {
+      padding: 12px 26px;
+      font-size: 0.95rem;
+    }
+    #scoreboard {
+      font-size: 1.1rem;
+    }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Dodge Falling Hearts</h1>
+  <div class="mode-toggle" aria-label="Toggle dark or light mode" role="button" tabindex="0" title="Toggle Dark/Light Mode">
+    <span>🌙</span>
+    <button class="toggle-btn" id="modeToggle" aria-pressed="false" aria-label="Toggle dark or light theme">
+      <span class="material-icons" aria-hidden="true">dark_mode</span>
+    </button>
+  </div>
+</header>
+<main role="main" aria-live="polite" aria-atomic="true">
+  <p id="instructions">Gerakkan karakter dengan panah kiri/kanan atau sentuh tombol. Hindari hati yang jatuh! Bertahan selama mungkin.</p>
+  <canvas id="gameCanvas" aria-label="Game area, karakter yang harus bergerak untuk menghindari hati jatuh"></canvas>
+  <div id="scoreboard" aria-live="polite" aria-atomic="true">
+    <div id="score">Skor: 0</div>
+    <div id="level">Level: 1</div>
+  </div>
+  <div id="message" aria-live="assertive"></div>
+  <div id="controls">
+    <button id="leftBtn" class="control-btn" aria-label="Gerak ke kiri" title="Gerak ke kiri">
+      <span class="material-icons">arrow_left</span>
+    </button>
+    <button id="startBtn" class="control-btn" aria-live="polite">Mulai Game</button>
+    <button id="rightBtn" class="control-btn" aria-label="Gerak ke kanan" title="Gerak ke kanan">
+      <span class="material-icons">arrow_right</span>
+    </button>
+  </div>
+</main>
+<footer>
+  <p>Didesain untuk kamu yang suka tantangan cepat dan penuh warna! Semangat bertahan!</p>
+</footer>
+
+<script>
+(() => {
+  const body = document.body;
+  const modeToggle = document.getElementById('modeToggle');
+  const startBtn = document.getElementById('startBtn');
+  const leftBtn = document.getElementById('leftBtn');
+  const rightBtn = document.getElementById('rightBtn');
+  const scoreEl = document.getElementById('score');
+  const levelEl = document.getElementById('level');
+  const messageEl = document.getElementById('message');
+  const instructionsEl = document.getElementById('instructions');
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+
+  // Set canvas size based on container width (4:3 ratio)
+  function resizeCanvas() {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.width * 0.75;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+    // need to re-render on resize because coordinates change
+    if (gameActive) draw();
+  });
+
+  // Game state
+  let gameActive = false;
+  let score = 0;
+  let level = 1;
+  let hearts = [];
+  let heartSpawnInterval = 1500;
+  let heartSpeed = 1.5;
+  let lastHeartbeatTime = 0;
+  const maxHearts = 15;
+  const playerSpeed = 7;
+  let keysDown = {};
+
+  // Player object
+  const player = {
+    width: 60,
+    height: 60,
+    x: 0,
+    y: 0,
+    color: '#b73e7c',
+    speed: playerSpeed,
+  };
+
+  // Heart object: x, y, speed
+  class Heart {
+    constructor(x, y, speed) {
+      this.x = x;
+      this.y = y;
+      this.size = 40 + Math.random() * 20;
+      this.speed = speed;
+      this.color = `hsl(340, 80%, ${70 - Math.random() * 30}%)`; // pinkish variation
+      this.rotation = 0;
+      this.rotationSpeed = (Math.random() * 0.04) - 0.02;
+    }
+
+    update() {
+      this.y += this.speed;
+      this.rotation += this.rotationSpeed;
+    }
+
+    draw(ctx) {
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(this.rotation);
+      ctx.fillStyle = this.color;
+      ctx.beginPath();
+      // Draw heart shape
+      const size = this.size / 2;
+      ctx.moveTo(0, size / 4);
+      ctx.bezierCurveTo(0, -size / 2, -size, -size / 2, -size, 0);
+      ctx.bezierCurveTo(-size, size / 2, 0, size * 1.5, 0, size * 1.75);
+      ctx.bezierCurveTo(0, size * 1.5, size, size / 2, size, 0);
+      ctx.bezierCurveTo(size, -size / 2, 0, -size / 2, 0, size / 4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    isOffScreen(canvasHeight) {
+      return this.y - this.size > canvasHeight;
+    }
+
+    collidesWith(rect) {
+      // Simple bounding box collision
+      const heartLeft = this.x - this.size;
+      const heartRight = this.x + this.size;
+      const heartTop = this.y - this.size;
+      const heartBottom = this.y + this.size;
+
+      const rectLeft = rect.x;
+      const rectRight = rect.x + rect.width;
+      const rectTop = rect.y;
+      const rectBottom = rect.y + rect.height;
+
+      return !(heartRight < rectLeft ||
+               heartLeft > rectRight ||
+               heartBottom < rectTop ||
+               heartTop > rectBottom);
+    }
+  }
+
+  // Initialize player position
+  function resetPlayerPosition() {
+    player.x = (canvas.width - player.width) / 2;
+    player.y = canvas.height - player.height - 10;
+  }
+
+  // Draw player as a circle with cute face
+  function drawPlayer(ctx) {
+    const centerX = player.x + player.width/2;
+    const centerY = player.y + player.height/2;
+    const radius = player.width / 2;
+
+    // Circle body
+    ctx.fillStyle = player.color;
+    ctx.beginPath();
+    ctx.ellipse(centerX, centerY, radius, radius * 0.85, 0, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.ellipse(centerX - 15, centerY - 5, 8, 10, 0, 0, 2 * Math.PI);
+    ctx.ellipse(centerX + 15, centerY - 5, 8, 10, 0, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Pupils
+    ctx.fillStyle = '#5b2e67';
+    ctx.beginPath();
+    ctx.ellipse(centerX - 15, centerY - 5, 4, 6, 0, 0, 2 * Math.PI);
+    ctx.ellipse(centerX + 15, centerY - 5, 4, 6, 0, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Mouth smile
+    ctx.strokeStyle = '#5b2e67';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY + 8, 18, 0, Math.PI, false);
+    ctx.stroke();
+  }
+
+  // Draw everything
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Draw hearts
+    hearts.forEach(h => h.draw(ctx));
+    // Draw player
+    drawPlayer(ctx);
+  }
+
+  // Update game state
+  function update(deltaTime) {
+    if (!gameActive) return;
+
+    // Move player left/right if keys pressed
+    if (keysDown['ArrowLeft'] || keysDown['Left']) {
+      player.x -= player.speed;
+    }
+    if (keysDown['ArrowRight'] || keysDown['Right']) {
+      player.x += player.speed;
+    }
+    // Keep player within canvas
+    player.x = Math.max(0, Math.min(player.x, canvas.width - player.width));
+
+    // Update hearts position and rotation
+    hearts.forEach(h => h.update());
+
+    // Remove hearts off screen
+    hearts = hearts.filter(h => !h.isOffScreen(canvas.height));
+
+    // Spawn new hearts periodically
+    const now = performance.now();
+    if (now - lastHeartbeatTime > heartSpawnInterval && hearts.length < maxHearts) {
+      spawnHeart();
+      lastHeartbeatTime = now;
+    }
+
+    // Collision detection player with hearts
+    for (let h of hearts) {
+      if (h.collidesWith(player)) {
+        endGame();
+        return;
+      }
+    }
+
+    // Increase difficulty over time (every 30 seconds level up)
+    if (now - gameStartTime > level * 30000) {
+      levelUp();
+    }
+  }
+
+  // Spawn a new falling heart at random x position
+  function spawnHeart() {
+    const x = Math.random() * (canvas.width - 80) + 40;
+    const speed = heartSpeed + Math.random() * 1;
+    hearts.push(new Heart(x, -60, speed));
+  }
+
+  // Increase level and difficulty
+  function levelUp() {
+    level++;
+    heartSpeed += 0.3;
+    heartSpawnInterval = Math.max(400, heartSpawnInterval - 100);
+    updateLevel();
+    messageEl.textContent = `Level naik ke ${level}! Semangat terus!`;
+    setTimeout(() => {
+      if (messageEl.textContent.startsWith('Level naik ke')) {
+        messageEl.textContent = '';
+      }
+    }, 3000);
+  }
+
+  // Update score UI
+  function updateScore() {
+    scoreEl.textContent = `Skor: ${score}`;
+  }
+
+  // Update level UI
+  function updateLevel() {
+    levelEl.textContent = `Level: ${level}`;
+  }
+
+  // Game loop
+  let lastTime = 0;
+  let gameStartTime = 0;
+  function gameLoop(timestamp = 0) {
+    if (!lastTime) lastTime = timestamp;
+    const deltaTime = timestamp - lastTime;
+    lastTime = timestamp;
+
+    if (gameActive) {
+      update(deltaTime);
+      score += deltaTime * 0.01;
+      updateScore();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+  }
+
+  // End game
+  function endGame() {
+    gameActive = false;
+    messageEl.textContent = `Game selesai! Skormu: ${Math.floor(score)}. Klik Mulai Game untuk coba lagi.`;
+    startBtn.disabled = false;
+    leftBtn.disabled = true;
+    rightBtn.disabled = true;
+  }
+
+  // Start game
+  function startGame() {
+    hearts = [];
+    score = 0;
+    level = 1;
+    heartSpeed = 1.5;
+    heartSpawnInterval = 1500;
+    updateScore();
+    updateLevel();
+    messageEl.textContent = '';
+    resetPlayerPosition();
+    gameActive = true;
+    startBtn.disabled = true;
+    leftBtn.disabled = false;
+    rightBtn.disabled = false;
+    gameStartTime = performance.now();
+    lastHeartbeatTime = 0;
+    requestAnimationFrame(gameLoop);
+  }
+
+  // Reset player position manually
+  function resetPlayerPosition() {
+    player.x = (canvas.width - player.width) / 2;
+    player.y = canvas.height - player.height - 10;
+  }
+
+  // Handle keyboard controls
+  window.addEventListener('keydown', e => {
+    keysDown[e.key] = true;
+  });
+  window.addEventListener('keyup', e => {
+    keysDown[e.key] = false;
+  });
+
+  // Buttons for touch controls
+  leftBtn.addEventListener('mousedown', () => keysDown['ArrowLeft'] = true);
+  leftBtn.addEventListener('mouseup', () => keysDown['ArrowLeft'] = false);
+  leftBtn.addEventListener('touchstart', e => { e.preventDefault(); keysDown['ArrowLeft'] = true; });
+  leftBtn.addEventListener('touchend', e => { e.preventDefault(); keysDown['ArrowLeft'] = false; });
+  rightBtn.addEventListener('mousedown', () => keysDown['ArrowRight'] = true);
+  rightBtn.addEventListener('mouseup', () => keysDown['ArrowRight'] = false);
+  rightBtn.addEventListener('touchstart', e => { e.preventDefault(); keysDown['ArrowRight'] = true; });
+  rightBtn.addEventListener('touchend', e => { e.preventDefault(); keysDown['ArrowRight'] = false; });
+
+  startBtn.addEventListener('click', startGame);
+
+  // Dark / Light mode toggle
+  function toggleMode() {
+    body.classList.toggle('dark');
+    const isDark = body.classList.contains('dark');
+    modeToggle.setAttribute('aria-pressed', isDark);
+    modeToggle.querySelector('span.material-icons').textContent = isDark ? 'light_mode' : 'dark_mode';
+    modeToggle.previousElementSibling.textContent = isDark ? '☀️' : '🌙';
+  }
+  modeToggle.addEventListener('click', toggleMode);
+  modeToggle.parentElement.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      toggleMode();
+    }
+  });
+
+  // Initialize
+  resetPlayerPosition();
+  leftBtn.disabled = true;
+  rightBtn.disabled = true;
+})();
+</script>
+</body>
+</html>
